@@ -7,6 +7,7 @@
 # you're doing.
 
 Vagrant.configure(2) do |config|
+
   # The most common configuration options are documented and commented below.
   # For a complete reference, please see the online documentation at
   # https://docs.vagrantup.com.
@@ -39,11 +40,17 @@ Vagrant.configure(2) do |config|
   # documentation for more information about their specific syntax and use.
   config.vm.provision "shell", inline: <<-SHELL
     sudo yum -y update
+    sudo yum -y install epel-release
     sudo yum -y install redhat-lsb-core
-    #sudo yum -y install redhat-lsb-core-4.0-7.el6.centos.x86_64
+    sudo yum -y install gcc
+    sudo yum -y install dkms
+    sudo yum -y install kernel-devel
     sudo yum -y install emacs
     sudo yum -y install git
     sudo yum -y install freetype-devel
     sudo yum -y install libpng-devel
   SHELL
+
+  config.vbguest.auto_update = true
+  config.vbguest.no_remote = false
 end
