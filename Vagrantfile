@@ -6,7 +6,9 @@
 # backwards compatibility). Please don't change it unless you know what
 # you're doing.
 
-Vagrant.configure(2) do |config|
+VAGRANTFILE_API_VERSION = 2
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   # The most common configuration options are documented and commented below.
   # For a complete reference, please see the online documentation at
@@ -22,13 +24,9 @@ Vagrant.configure(2) do |config|
   # argument is a set of non-required options.
   # config.vm.synced_folder "../data", "/vagrant_data"
 
-  # Provider-specific configuration so you can fine-tune various
-  # backing providers for Vagrant. These expose provider-specific options.
-  # Example for VirtualBox:
-  #
   config.vm.provider "virtualbox" do |vb|
     # Customize the amount of memory on the VM:
-    vb.memory = "4096"
+    vb.memory = 1024 * 4
     vb.cpus = 4
   end
   #
