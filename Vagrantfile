@@ -37,14 +37,19 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # Puppet, Chef, Ansible, Salt, and Docker are also available. Please see the
   # documentation for more information about their specific syntax and use.
   config.vm.provision "shell", inline: <<-SHELL
+    # Make sure the yum database is up-to-date.
     sudo yum -y update
+    # Install the necessary repositories.
     sudo yum -y install epel-release
     sudo yum -y install redhat-lsb-core
+    # Install the things necessary to get VirtualBox's host extensions to work.
     sudo yum -y install gcc
     sudo yum -y install dkms
     sudo yum -y install kernel-devel
+    # Install developer tools
     sudo yum -y install emacs
     sudo yum -y install git
+    # Install packages necessary for building some graphics tools (e.g. matplotlib).
     sudo yum -y install freetype-devel
     sudo yum -y install libpng-devel
   SHELL
