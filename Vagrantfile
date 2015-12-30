@@ -28,7 +28,15 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     # Customize the amount of memory on the VM:
     vb.memory = 1024 * 4
     vb.cpus = 4
+
+    # Create a new disk for use by the btrfs filesystem, for Docker's use
+    file_to_disk = './tmp/large_disk.vdi'
+    unless File.exist?(file_to_disk)
+      vb.customize ['createhd', '--filename', file_to_disk, '--size', 500 * 1024]
+    end
+    vb.customize ['storageattach', :id, '--storagectl', 'SATA Controller', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', file_to_disk]
   end
+
   #
   # View the documentation for the provider you are using for more
   # information on available options.
@@ -52,6 +60,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     # Install packages necessary for building some graphics tools (e.g. matplotlib).
     sudo yum -y install freetype-devel
     sudo yum -y install libpng-devel
+    # Install packages to support btrfs
+    sudo yum -y install btrfs-progs
+    sudo mprobe btrfs
   SHELL
 
   config.vbguest.auto_update = true
