@@ -27,15 +27,19 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.provider "virtualbox" do |vb|
     # Customize the amount of memory on the VM:
     vb.memory = 1024 * 4
-    vb.cpus = 4
+    vb.cpus = 4 
 
     # Create a new disk for use by the btrfs filesystem, for Docker's use
     file_to_disk = './tmp/large_disk.vdi'
     unless File.exist?(file_to_disk)
-      vb.customize ['createhd', '--filename', file_to_disk, '--size', 500 * 1024]
+      # size of disk is in MiB
+      vb.customize [ 'createhd', '--filename', file_to_disk, '--size', 500 * 1024 ]
     end
     vb.customize ['storageattach', :id, '--storagectl', 'SATA Controller', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', file_to_disk]
   end
+
+  config.vbguest.auto_update = true
+  config.vbguest.no_remote = false
 
   #
   # View the documentation for the provider you are using for more
@@ -60,11 +64,33 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     # Install packages necessary for building some graphics tools (e.g. matplotlib).
     sudo yum -y install freetype-devel
     sudo yum -y install libpng-devel
-    # Install packages to support btrfs
-    sudo yum -y install btrfs-progs
-    sudo mprobe btrfs
-  SHELL
 
-  config.vbguest.auto_update = true
-  config.vbguest.no_remote = false
+    # Install docker. We get the version through yum, but then we have
+    # to replace the binary with one distributed by docker. The one
+    # from yum has no support for btrfs.
+    sudo yum -y install docker-io
+    sudo groupadd docker
+    sudo usermod -a -G docker vagrant
+    pushd /usr/bin
+    wget https://get.docker.com/builds/Linux/x86_64/docker-1.7.1 -O docker
+    chmod +x docker
+    popd
+
+    # Install packages to support btrfs, and set docker up to use it.
+    sudo yum -y install btrfs-progs
+    sudo modprobe btrfs
+    sudo bash -c "echo modprobe btrfs > /etc/rc.modules"
+    sudo chmod +x /etc/rc.modules
+    echo -e "o\nn\np\n1\n\n\nw" | sudo fdisk -c /dev/sdb
+    sudo pvcreate /dev/sdb1
+    sudo vgcreate docker_btrfs /dev/sdb1
+    sudo lvcreate -l 100%FREE -n docker_btrfs01 docker_btrfs
+    sudo mkfs.btrfs /dev/docker_btrfs/docker_btrfs01
+    sudo bash -c "echo \"/dev/docker_btrfs/docker_btrfs01 /var/lib/docker btrfs defaults 0 0\" >> /etc/fstab"
+    sudo mount -a
+
+    # Put use of btrfs into /etc/sysconfig/docker
+    sudo cp /vagrant/etc.sysconfig.docker /etc/sysconfig/docker
+    sudo service docker restart
+  SHELL
 end
